@@ -1,0 +1,23 @@
+{
+  "strategy_name": "EMACrossoverStrategy",
+  "symbol": "EURUSD",
+  "timeframe": "M1",
+  "start_date": "2026-08-24 18:28:00+00:00",
+  "end_date": "2026-08-26 03:47:00+00:00",
+  "duration_bars": 2000,
+  "total_return": -8.740000339457765e-07,
+  "sharpe_ratio": 0.0,
+  "max_drawdown": 8.910000177215417e-07,
+  "max_drawdown_pct": 8.910000177215417e-07,
+  "win_rate": 14.754098360655737,
+  "profit_factor": 0.14705882352938615,
+  "num_trades": 61,
+  "avg_trade": 0.0,
+  "best_trade": 4.100000000000215e-06,
+  "worst_trade": 0.0,
+  "commission_total": 0,
+  "final_value": 9999.999912599997,
+  "starting_value": 10000,
+  "commission": 5.0,
+  "slippage": 0.5
+}
