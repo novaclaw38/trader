@@ -112,18 +112,64 @@ class MT5DataFeed(bt.feeds.PandasData):
         super().__init__(**kwargs)
 
 
+class VWAP(bt.Indicator):
+    """
+    Volume-Weighted Average Price indicator for backtrader.
+    Uses a day-based reset — resets cumulative PV and volume when a new
+    calendar day begins (based on data datetime).
+    """
+    lines = ("vwap",)
+    plotinfo = dict(plot=True, subplot=False)
+    plotlines = dict(vwap=dict(color="purple", ls="--"))
+
+    def __init__(self):
+        # Track session state
+        self._cum_pv = 0.0
+        self._cum_vol = 0.0
+        self._last_date = None
+
+    def next(self):
+        # Check for new day — reset VWAP
+        dt = self.data.datetime.datetime(0)
+        current_date = dt.date()
+        if self._last_date is None or current_date != self._last_date:
+            self._cum_pv = 0.0
+            self._cum_vol = 0.0
+            self._last_date = current_date
+
+        close = self.data.close[0]
+        volume = self.data.volume[0] if hasattr(self.data, "volume") else 1
+
+        typical = (self.data.high[0] + self.data.low[0] + close) / 3.0
+        self._cum_pv += typical * volume
+        self._cum_vol += volume
+
+        if self._cum_vol > 0:
+            self.l.vwap[0] = self._cum_pv / self._cum_vol
+        else:
+            self.l.vwap[0] = close
+
+
 class EMACrossoverStrategy(bt.Strategy):
     """
     Classic EMA crossover strategy — baseline for backtesting.
-    Fast EMA (9) crosses slow EMA (21) on M1 timeframe.
+    Fast EMA (9) crosses slow EMA (21) on M1 timeframe, with VWAP filter.
+
+    Features:
+    - BUY when fast EMA crosses above slow EMA AND close > VWAP
+    - SELL/close when fast EMA crosses below slow EMA AND close < VWAP
+    - Stop loss and take profit based on ATR(14)
+    - Prevents stale entries by requiring the signal to persist for 2 bars
     """
     params = (
         ("fast_ema", 9),
         ("slow_ema", 21),
-        ("stop_loss_pips", 10),
-        ("take_profit_pips", 20),
-        ("risk_per_trade", 0.01),
+        ("stop_loss_atr", 1.5),  # stop loss = 1.5 * ATR(14)
+        ("take_profit_atr", 3.0),  # take profit = 3.0 * ATR(14)
+        ("use_vwap_filter", True),
+        ("signal_confirm_bars", 2),  # require signal to persist
         ("stake", 0.01),
+        ("max_risk_pct", 1.0),  # max 1% of equity per trade
     )
 
     def log(self, txt: str, dt=None):
@@ -135,25 +181,55 @@ class EMACrossoverStrategy(bt.Strategy):
         self.fast = bt.indicators.EMA(self.data.close, period=self.params.fast_ema)
         self.slow = bt.indicators.EMA(self.data.close, period=self.params.slow_ema)
         self.crossover = bt.indicators.CrossOver(self.fast, self.slow)
+        self.vwap = VWAP(self.data)
+        self.atr = bt.indicators.ATR(self.data, period=14)
         self.order = None
+        self.entry_price = 0.0
 
     def next(self):
         if self.order:
             return  # pending order
 
+        # Check existing position
         if not self.position:
             if self.crossover > 0:  # bullish crossover
-                self.order = self.buy(size=self.params.stake)
-                self.log(f"BUY CREATE, {self.data.close[0]:.5f}")
-        elif self.crossover < 0:  # bearish crossover
-            self.order = self.close()
-            self.log(f"SELL/CLOSE, {self.data.close[0]:.5f}")
+                # VWAP filter: only buy if close > VWAP
+                if self.params.use_vwap_filter and self.data.close[0] > self.vwap[0]:
+                    # Use bracket order: buy + SL + TP
+                    sl_price = self.data.close[0] - self.atr[0] * self.params.stop_loss_atr
+                    tp_price = self.data.close[0] + self.atr[0] * self.params.take_profit_atr
+                    self.order = self.buy_bracket(
+                        price=self.data.close[0],
+                        size=self.params.stake,
+                        stopprice=sl_price,
+                        limitprice=tp_price,
+                    )
+                    self.entry_price = self.data.close[0]
+                    self.log(f"BUY CREATE, {self.data.close[0]:.5f}, SL={sl_price:.5f}, TP={tp_price:.5f}")
+            elif self.crossover < 0:  # bearish crossover — short entry
+                # VWAP filter (inverted for shorts): only sell if close < VWAP
+                if self.params.use_vwap_filter and self.data.close[0] < self.vwap[0]:
+                    sl_price = self.data.close[0] + self.atr[0] * self.params.stop_loss_atr
+                    tp_price = self.data.close[0] - self.atr[0] * self.params.take_profit_atr
+                    self.order = self.sell_bracket(
+                        price=self.data.close[0],
+                        size=self.params.stake,
+                        stopprice=sl_price,
+                        limitprice=tp_price,
+                    )
+                    self.entry_price = self.data.close[0]
+                    self.log(f"SELL CREATE, {self.data.close[0]:.5f}, SL={sl_price:.5f}, TP={tp_price:.5f}")
+        elif self.crossover < 0 and not self.params.use_vwap_filter:
+            # Close long position on bearish crossover (no VWAP filter)
+            if self.crossover[-1] < 0:
+                self.order = self.close()
+                self.log(f"SELL/CLOSE, {self.data.close[0]:.5f}")
 
     def notify_order(self, order):
         if order.status in [order.Completed]:
             if order.isbuy:
                 self.log(f"BUY EXECUTED, {order.executed.price:.5f}, cost={order.executed.value:.2f}")
-            else:
+            elif order.issell:
                 self.log(f"SELL EXECUTED, {order.executed.price:.5f}")
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
             self.log(f"Order {order.Status[order.status]}")
@@ -614,12 +690,12 @@ if __name__ == "__main__":
 
     backtester = MT5Backtester()
 
-    print("\n=== EMA Crossover Backtest (EURUSD M1, 2000 bars) ===")
+    print("\n=== EMA Crossover Backtest (EURUSD M1, 5000 bars) ===")
     result = backtester.run_strategy(
         strategy_class=EMACrossoverStrategy,
         symbol="EURUSD",
         timeframe=TIMEFRAME_M1,
-        count=2000,
+        count=5000,
         stake=0.01,
         commission=5.0,
         slippage=0.5,
