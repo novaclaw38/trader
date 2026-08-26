@@ -16,6 +16,7 @@ Usage:
     python mt5_live.py --symbol EURUSD --timeframe M1 --interval 10
 """
 import MetaTrader5 as mt5
+import pandas as pd
 import time
 import logging
 import json
@@ -92,8 +93,6 @@ class SignalGenerator:
 
         Returns None if no clear signal.
         """
-        import pandas as pd
-
         if len(df) < self.slow_ema + 5:
             return None
 
@@ -368,6 +367,7 @@ class LiveTrader:
             logger.warning("DRY RUN MODE — no orders will be sent to MT5")
 
         self.running = True
+        self._cycles_completed = 0
         self._log("trader_started", {
             "symbol": self.symbol,
             "timeframe": str(self.timeframe),
@@ -391,7 +391,7 @@ class LiveTrader:
                     self.mt5_mgr.ensure_connection()
                     self.risk_engine.update()
                     df = self.fetcher.fetch_bars(self.symbol, self.timeframe, count=100, force_refresh=True)
-                    if df:
+                    if df is not None and len(df) > 0:
                         signal = self.signal_gen.generate_signal(df, self.symbol)
                         if signal:
                             self._log("dry_run_signal", {
@@ -404,6 +404,7 @@ class LiveTrader:
                         else:
                             logger.debug(f"[{datetime.now().strftime('%H:%M:%S')}] No signal")
 
+                self._cycles_completed = cycle
                 time.sleep(self.interval)
 
         except KeyboardInterrupt:
@@ -415,7 +416,7 @@ class LiveTrader:
         """Stops the trading loop and cleans up."""
         self.running = False
         self._log("trader_stopped", {
-            "cycles_completed": len(self.trade_history),
+            "cycles_completed": getattr(self, "_cycles_completed", 0),
             "trades_executed": sum(1 for t in self.trade_history if t.status == "executed"),
             "trades_blocked": sum(1 for t in self.trade_history if t.status == "blocked_by_risk"),
         })
@@ -433,6 +434,9 @@ def main():
     parser.add_argument("--log-level", default="INFO", help="Log level")
 
     args = parser.parse_args()
+
+    # Ensure logs directory exists
+    os.makedirs(os.path.join(os.path.dirname(__file__), "logs"), exist_ok=True)
 
     logging.basicConfig(
         level=getattr(logging, args.log_level.upper()),

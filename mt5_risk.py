@@ -191,7 +191,7 @@ class RiskEngine:
         # Fetch recent bars for spread data
         bars = mt5.copy_rates_from_pos(symbol, mt5.TIMEFRAME_M1, 0, lookback_bars)
         if bars is not None:
-            spreads = [bar["spread"] for bar in bars if bar.get("spread", 0) > 0]
+            spreads = [bar["spread"] for bar in bars if bar["spread"] > 0]
             self._spread_history[symbol] = spreads[-lookback_bars:]
 
         return self._spread_history.get(symbol, [0])

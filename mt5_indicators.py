@@ -58,9 +58,13 @@ class IndicatorPipeline:
 
         # MACD (default: 12, 26, 9)
         macd_result = ta.macd(close, fast=12, slow=26, signal=9)
-        df["macd"] = macd_result["MACD_12_26_9"]
-        df["macd_signal"] = macd_result["MACS_12_26_9"]
-        df["macd_hist"] = macd_result["MACH_12_26_9"]
+        # Handle both pandas_ta column naming conventions
+        macd_col = "MACD_12_26_9" if "MACD_12_26_9" in macd_result.columns else macd_result.columns[0]
+        macs_col = "MACS_12_26_9" if "MACS_12_26_9" in macd_result.columns else macd_result.columns[1]
+        mach_col = "MACH_12_26_9" if "MACH_12_26_9" in macd_result.columns else macd_result.columns[2]
+        df["macd"] = macd_result[macd_col]
+        df["macd_signal"] = macd_result[macs_col]
+        df["macd_hist"] = macd_result[mach_col]
 
         # Bollinger Bands (default: 20, 2 std)
         bb_result = ta.bbands(close, length=20, std=2)

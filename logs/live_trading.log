@@ -1,0 +1,30 @@
+2026-08-26 03:57:05,840 [INFO] __main__: dry_run_mode: {'enabled': True}
+2026-08-26 03:57:05,841 [WARNING] __main__: DRY RUN MODE — no orders will be sent to MT5
+2026-08-26 03:57:05,843 [INFO] __main__: trader_started: {'symbol': 'EURUSD', 'timeframe': '1', 'interval': 10, 'dry_run': True, 'max_cycles': 3}
+2026-08-26 03:57:05,885 [INFO] mt5_connection: MT5 connected: login=111671837, server=MetaQuotes-Demo
+2026-08-26 03:57:07,432 [INFO] __main__: trader_stopped: {'cycles_completed': 0, 'trades_executed': 0, 'trades_blocked': 0}
+2026-08-26 03:57:07,433 [INFO] mt5_connection: MT5 connection shut down
+2026-08-26 03:57:54,458 [INFO] __main__: dry_run_mode: {'enabled': True}
+2026-08-26 03:57:54,458 [WARNING] __main__: DRY RUN MODE — no orders will be sent to MT5
+2026-08-26 03:57:54,462 [INFO] __main__: trader_started: {'symbol': 'EURUSD', 'timeframe': '1', 'interval': 10, 'dry_run': True, 'max_cycles': 3}
+2026-08-26 03:57:54,583 [INFO] mt5_connection: MT5 connected: login=111671837, server=MetaQuotes-Demo
+2026-08-26 03:57:57,264 [INFO] mt5_data: Fetched 100 bars for EURUSD (1 -> Z:\home\rebawn\trader\data\raw\EURUSD_M1.parquet)
+2026-08-26 03:57:57,277 [INFO] __main__: trader_stopped: {'cycles_completed': 0, 'trades_executed': 0, 'trades_blocked': 0}
+2026-08-26 03:57:57,278 [INFO] mt5_connection: MT5 connection shut down
+2026-08-26 03:58:54,621 [INFO] __main__: dry_run_mode: {'enabled': True}
+2026-08-26 03:58:54,622 [WARNING] __main__: DRY RUN MODE — no orders will be sent to MT5
+2026-08-26 03:58:54,661 [INFO] __main__: trader_started: {'symbol': 'EURUSD', 'timeframe': '1', 'interval': 10, 'dry_run': True, 'max_cycles': 3}
+2026-08-26 03:58:54,697 [INFO] mt5_connection: MT5 connected: login=111671837, server=MetaQuotes-Demo
+2026-08-26 03:58:55,670 [INFO] mt5_data: Fetched 100 bars for EURUSD (1 -> Z:\home\rebawn\trader\data\raw\EURUSD_M1.parquet)
+2026-08-26 03:58:55,746 [INFO] __main__: trader_stopped: {'cycles_completed': 0, 'trades_executed': 0, 'trades_blocked': 0}
+2026-08-26 03:58:55,749 [INFO] mt5_connection: MT5 connection shut down
+2026-08-26 04:00:06,827 [INFO] __main__: dry_run_mode: {'enabled': True}
+2026-08-26 04:00:06,829 [WARNING] __main__: DRY RUN MODE — no orders will be sent to MT5
+2026-08-26 04:00:06,831 [INFO] __main__: trader_started: {'symbol': 'EURUSD', 'timeframe': '1', 'interval': 10, 'dry_run': True, 'max_cycles': 3}
+2026-08-26 04:00:06,864 [INFO] mt5_connection: MT5 connected: login=111671837, server=MetaQuotes-Demo
+2026-08-26 04:00:07,392 [INFO] mt5_data: Fetched 100 bars for EURUSD (1 -> Z:\home\rebawn\trader\data\raw\EURUSD_M1.parquet)
+2026-08-26 04:05:29,651 [INFO] __main__: dry_run_mode: {'enabled': True}
+2026-08-26 04:05:29,651 [WARNING] __main__: DRY RUN MODE — no orders will be sent to MT5
+2026-08-26 04:05:29,653 [INFO] __main__: trader_started: {'symbol': 'EURUSD', 'timeframe': '1', 'interval': 5, 'dry_run': True, 'max_cycles': 2}
+2026-08-26 04:05:29,676 [INFO] mt5_connection: MT5 connected: login=111671837, server=MetaQuotes-Demo
+2026-08-26 04:05:30,034 [INFO] mt5_data: Fetched 100 bars for EURUSD (1 -> Z:\home\rebawn\trader\data\raw\EURUSD_M1.parquet)
